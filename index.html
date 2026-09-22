@@ -233,6 +233,44 @@
     padding: 20px;
     box-shadow: 0 1px 3px rgba(30,60,50,.06);
   }
+  .cal-search{
+    display:flex;
+    align-items:flex-end;
+    gap:10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .cal-search .field{
+    flex: 1 1 200px;
+  }
+  .cal-search label{
+    display:block;
+    font-size:.8rem;
+    font-weight:600;
+    color: var(--sky-dark);
+    margin-bottom:5px;
+  }
+  .cal-search input{
+    width:100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    font-size: .95rem;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .cal-search input:focus{
+    outline:none;
+    border-color: var(--leaf);
+    background:#fff;
+  }
+  .cal-search-msg{
+    font-size:.82rem;
+    color: var(--sky-dark);
+    margin: -8px 0 14px 0;
+    min-height: 1.1em;
+    font-weight:600;
+  }
   .cal-nav{
     display:flex;
     align-items:center;
@@ -288,6 +326,10 @@
   }
   table.calendar td.booked:hover{ background:#f6cfcf; }
   table.calendar td.blank{ background:transparent; border:none; }
+  table.calendar td.highlighted{
+    outline: 3px solid var(--sky);
+    outline-offset: -3px;
+  }
   .booked-tag{
     display:block;
     font-size:.68rem;
@@ -352,7 +394,7 @@
         </div>
         <div class="field">
           <label for="guestCount">Number of guests</label>
-          <input type="number" id="guestCount" min="1" max="30" placeholder="1–30">
+          <input type="number" id="guestCount" min="1" max="30" placeholder="1-30">
         </div>
         <div class="field">
           <label for="date">Date</label>
@@ -405,6 +447,14 @@
   <section class="panel" id="panel-cal">
     <h2 class="section-title">Booking calendar</h2>
     <div class="cal-card">
+      <div class="cal-search">
+        <div class="field">
+          <label for="calSearchDate">Search by date</label>
+          <input type="date" id="calSearchDate">
+        </div>
+        <button type="button" class="secondary" onclick="searchCalendarDate()">Go to date</button>
+      </div>
+      <p class="cal-search-msg" id="calSearchMsg"></p>
       <div class="cal-nav">
         <button type="button" onclick="previousMonth()">&#8249;</button>
         <span id="monthYear">September 2026</span>
@@ -418,7 +468,7 @@
         </thead>
         <tbody id="calendarBody"></tbody>
       </table>
-      <div class="legend"><span class="swatch"></span> Booked date — click to manage</div>
+      <div class="legend"><span class="swatch"></span> Booked date â€” click to manage</div>
     </div>
   </section>
 
@@ -426,7 +476,7 @@
 
 <script>
 /* =====================================================================
-   POLICARPIO'S PRIVATE POOL — APPOINTMENT SYSTEM
+   POLICARPIO'S PRIVATE POOL â€” APPOINTMENT SYSTEM
 
    1) BUSINESS PROCESS
       A staff member records a client's pool booking (name, mobile,
@@ -451,10 +501,10 @@
    3) DATA STRUCTURE CHOSEN
       `appointments` is kept as an array that is ALWAYS sorted in
       ascending order by start date. Keeping it sorted is what makes
-      binary search possible for conflict checking below — this is
+      binary search possible for conflict checking below â€” this is
       the core DS&A decision for this module.
 
-   4) ALGORITHMS — all implemented manually (no .sort(), .find(),
+   4) ALGORITHMS â€” all implemented manually (no .sort(), .find(),
       .filter(), .some(), .includes(), or .splice() are used):
         - insertSorted()      : manual insertion-sort-style insert
         - binarySearchInsertPos(): manual binary search
@@ -475,7 +525,7 @@ function switchTab(tab){
 }
 
 // Data structure: array of appointment objects, invariant = always
-// sorted ascending by `date` (enforced by insertSorted/removeAt only —
+// sorted ascending by `date` (enforced by insertSorted/removeAt only â€”
 // never mutated any other way).
 let appointments = [];
 
@@ -490,6 +540,9 @@ let editId = null;
 let today = new Date();
 let currentMonth = today.getMonth();
 let currentYear = today.getFullYear();
+
+// Date currently highlighted via the calendar search box (yyyy-mm-dd or null)
+let highlightedDate = null;
 
 function getTodayString() {
   let now = new Date();
@@ -529,7 +582,7 @@ function binarySearchInsertPos(targetDate) {
 /* ---------------------------------------------------------------------
    ALGORITHM: Manual Insertion Sort (single-element insert)
    Uses the sorted position found by binary search, then shifts
-   elements right by hand to open a slot — this is the manual
+   elements right by hand to open a slot â€” this is the manual
    insertion-sort mechanic applied one element at a time so the array
    never has to be re-sorted from scratch.
    Time Complexity : O(n) worst case (shifting), O(log n) to locate
@@ -560,7 +613,7 @@ function removeAt(index) {
 
 /* ---------------------------------------------------------------------
    Manual linear search by id.
-   Time Complexity : O(n) — used only when the user clicks Edit/Remove
+   Time Complexity : O(n) â€” used only when the user clicks Edit/Remove
                       on a single row, an infrequent, user-paced
                       operation, so O(n) here is an acceptable
                       trade-off against the added complexity of
@@ -579,7 +632,7 @@ function findIndexById(id) {
    Because the array is kept sorted by start date, we only need to
    inspect the appointment just before the insertion point (its range
    may extend into ours) and the run of appointments whose start date
-   falls inside [date, rangeEnd] — every other appointment in the
+   falls inside [date, rangeEnd] â€” every other appointment in the
    array is provably out of range and is never touched.
    Time Complexity : O(log n) to locate the region + O(k) to check the
                       k candidates that could possibly overlap
@@ -753,6 +806,10 @@ function removeAppointment(id) {
   let index = findIndexById(id);
   if (index === -1) return;
 
+  let a = appointments[index];
+  let confirmRemove = confirm("Remove the appointment for " + a.name + " on " + a.date + "?");
+  if (!confirmRemove) return;
+
   removeAt(index);
 
   if (editId === id) {
@@ -818,6 +875,11 @@ function displayCalendar() {
       });
     }
 
+    // Highlight the date currently targeted by the calendar search box
+    if (highlightedDate !== null && cellDate === highlightedDate) {
+      cell.className = (cell.className ? cell.className + " " : "") + "highlighted";
+    }
+
     row.appendChild(cell);
 
     if ((firstDay + day) % 7 === 0) {
@@ -833,6 +895,39 @@ function displayCalendar() {
       row.appendChild(blankCell);
     }
     calendarBody.appendChild(row);
+  }
+}
+
+// ---------- Calendar: search by date ----------
+// Jumps the calendar to the month containing the searched date and
+// highlights that day. Also reports whether the date is booked.
+function searchCalendarDate() {
+  let searchInput = document.getElementById("calSearchDate");
+  let msg = document.getElementById("calSearchMsg");
+  let value = searchInput.value;
+
+  if (value === "") {
+    msg.innerHTML = "Please choose a date to search.";
+    highlightedDate = null;
+    displayCalendar();
+    return;
+  }
+
+  let parts = value.split("-");
+  let year = parseInt(parts[0], 10);
+  let month = parseInt(parts[1], 10) - 1;
+
+  currentYear = year;
+  currentMonth = month;
+  highlightedDate = value;
+
+  displayCalendar();
+
+  let booking = hasConflict(value, value, null);
+  if (booking) {
+    msg.innerHTML = value + " is booked for " + booking.name + ".";
+  } else {
+    msg.innerHTML = value + " is available.";
   }
 }
 
