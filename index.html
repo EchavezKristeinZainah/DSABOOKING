@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Policarpio's Private Pool</title>
+<style>
+  :root{
+    --leaf: #4c9a7d;
+    --leaf-light: #dbf0e6;
+    --leaf-dark: #2f6b52;
+    --sky: #3f7fb0;
+    --sky-light: #dbeaf5;
+    --sky-dark: #285f85;
+    --ink: #1e2b28;
+    --paper: #f5faf8;
+    --line: #cfe3da;
+    --danger: #c65b5b;
+    --danger-light: #fbe4e4;
+    box-sizing: border-box;
+  }
+  *{box-sizing:inherit;}
+  html,body{
+    margin:0;
+    height:100%;
+    background: var(--paper);
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    color: var(--ink);
+  }
+
+  /* ---------- Top nav ---------- */
+  header.topnav{
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: linear-gradient(90deg, var(--sky-dark), var(--leaf-dark));
+    padding: env(safe-area-inset-top,0px) 0 0 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,.12);
+  }
+  .nav-inner{
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 14px 20px 0 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .brand .dot{
+    width:10px;height:10px;border-radius:50%;
+    background: var(--leaf-light);
+    display:inline-block;
+    margin-right:2px;
+  }
+  .brand h1{
+    color:#fff;
+    font-size: 1.8rem;
+    font-weight:700;
+    margin:0;
+    letter-spacing: .3px;
+  }
+  .tabs{
+    display:flex;
+    gap: 4px;
+    padding: 10px 20px 0 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .tab-btn{
+    appearance:none;
+    border:none;
+    background: rgba(255,255,255,.12);
+    color: #eaf6f0;
+    padding: 10px 18px;
+    font-size: .92rem;
+    font-weight:600;
+    border-radius: 10px 10px 0 0;
+    cursor:pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .tab-btn:hover{ background: rgba(255,255,255,.22); }
+  .tab-btn.active{
+    background: var(--paper);
+    color: var(--sky-dark);
+  }
+
+  main{
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 28px 20px 60px 20px;
+  }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  h2.section-title{
+    font-size: 1.1rem;
+    font-weight:700;
+    color: var(--sky-dark);
+    margin: 0 0 18px 0;
+    border-left: 4px solid var(--leaf);
+    padding-left: 10px;
+  }
+
+  /* ---------- Form ---------- */
+  .form-card{
+    background:#fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 1px 3px rgba(30,60,50,.06);
+  }
+  .field-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+    gap: 16px;
+  }
+  .field label{
+    display:block;
+    font-size:.8rem;
+    font-weight:600;
+    color: var(--sky-dark);
+    margin-bottom:5px;
+  }
+  .field input, .field select{
+    width:100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    font-size: .95rem;
+    background: var(--paper);
+    color: var(--ink);
+    transition: border-color .15s ease;
+  }
+  .field input:focus, .field select:focus{
+    outline:none;
+    border-color: var(--leaf);
+    background:#fff;
+  }
+  .error-msg{
+    color: var(--danger);
+    font-size: .85rem;
+    font-weight:600;
+    min-height: 1.2em;
+    margin: 14px 0 0 0;
+  }
+  .btn-row{
+    display:flex;
+    gap:10px;
+    margin-top: 14px;
+  }
+  button.primary, button.secondary, button.danger-btn{
+    border:none;
+    border-radius: 8px;
+    padding: 11px 20px;
+    font-size:.9rem;
+    font-weight:700;
+    cursor:pointer;
+    transition: transform .1s ease, box-shadow .15s ease;
+  }
+  button.primary{
+    background: var(--leaf);
+    color:#fff;
+  }
+  button.primary:hover{ background: var(--leaf-dark); }
+  button.secondary{
+    background: var(--sky-light);
+    color: var(--sky-dark);
+  }
+  button.secondary:hover{ background: #c9e0ef; }
+  button.danger-btn{
+    background: var(--danger-light);
+    color: var(--danger);
+    padding: 6px 12px;
+    font-size:.8rem;
+  }
+  button.danger-btn:hover{ background: #f6cfcf; }
+  button:active{ transform: scale(.97); }
+
+  /* ---------- Table ---------- */
+  .table-wrap{
+    overflow-x:auto;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    font-size:.9rem;
+  }
+  thead th{
+    background: var(--sky-light);
+    color: var(--sky-dark);
+    text-align:left;
+    padding: 10px 12px;
+    font-weight:700;
+    border-bottom: 2px solid var(--line);
+  }
+  tbody td{
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background: var(--leaf-light); }
+  .empty-row td{
+    text-align:center;
+    color:#7c8f89;
+    padding: 22px;
+    font-style: italic;
+  }
+  .status-pill{
+    display:inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size:.78rem;
+    font-weight:700;
+  }
+  .status-Paid{ background: var(--leaf-light); color: var(--leaf-dark); }
+  .status-Unpaid{ background: var(--danger-light); color: var(--danger); }
+  .status-Downpayment{ background: var(--sky-light); color: var(--sky-dark); }
+
+  /* ---------- Calendar ---------- */
+  .cal-card{
+    background:#fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(30,60,50,.06);
+  }
+  .cal-nav{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 18px;
+    margin-bottom: 16px;
+  }
+  .cal-nav button{
+    border:none;
+    background: var(--sky-light);
+    color: var(--sky-dark);
+    width: 34px; height:34px;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor:pointer;
+    font-weight:700;
+  }
+  .cal-nav button:hover{ background:#c9e0ef; }
+  .cal-nav span{
+    font-weight:700;
+    font-size: 1.05rem;
+    color: var(--ink);
+    min-width: 160px;
+    text-align:center;
+  }
+  table.calendar{
+    width:100%;
+    border-collapse: separate;
+    border-spacing: 6px;
+  }
+  table.calendar th{
+    font-size:.75rem;
+    color: var(--sky-dark);
+    font-weight:700;
+    padding-bottom:4px;
+  }
+  table.calendar td{
+    height: 62px;
+    width: 14.28%;
+    vertical-align: top;
+    padding: 6px;
+    border-radius: 8px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    font-size:.85rem;
+    color: var(--ink);
+  }
+  table.calendar td.booked{
+    background: var(--danger-light);
+    border-color: #eac3c3;
+    cursor:pointer;
+    font-weight:700;
+  }
+  table.calendar td.booked:hover{ background:#f6cfcf; }
+  table.calendar td.blank{ background:transparent; border:none; }
+  .booked-tag{
+    display:block;
+    font-size:.68rem;
+    color: var(--danger);
+    margin-top: 2px;
+  }
+  .legend{
+    margin-top: 14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:.85rem;
+    color: var(--ink);
+  }
+  .legend .swatch{
+    width:14px;height:14px;
+    border-radius:4px;
+    background: var(--danger-light);
+    border:1px solid #eac3c3;
+    display:inline-block;
+  }
+
+  @media (max-width: 560px){
+    .field-grid{ grid-template-columns: 1fr; }
+    table.calendar td{ height: 48px; font-size:.75rem; }
+    .cal-nav span{ min-width: 120px; font-size:.92rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topnav">
+  <div class="nav-inner">
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        <h1>Policarpio's Private Pool</h1>
+      </div>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="book" onclick="switchTab('book')">New Booking</button>
+    <button class="tab-btn" data-tab="list" onclick="switchTab('list')">Appointments</button>
+    <button class="tab-btn" data-tab="cal" onclick="switchTab('cal')">Calendar</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- NEW BOOKING -->
+  <section class="panel active" id="panel-book">
+    <h2 class="section-title">Client information</h2>
+    <div class="form-card">
+      <div class="field-grid">
+        <div class="field">
+          <label for="name">Name</label>
+          <input type="text" id="name" placeholder="Full name">
+        </div>
+        <div class="field">
+          <label for="mobile">Mobile number</label>
+          <input type="tel" id="mobile" placeholder="09xx xxx xxxx">
+        </div>
+        <div class="field">
+          <label for="guestCount">Number of guests</label>
+          <input type="number" id="guestCount" min="1" max="30" placeholder="1–30">
+        </div>
+        <div class="field">
+          <label for="date">Date</label>
+          <input type="date" id="date">
+        </div>
+        <div class="field">
+          <label for="until">Until (optional)</label>
+          <input type="date" id="until">
+        </div>
+        <div class="field">
+          <label for="paymentStatus">Payment status</label>
+          <select id="paymentStatus">
+            <option value="">Select payment status</option>
+            <option value="Paid">Paid</option>
+            <option value="Downpayment">Downpayment</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="error-msg" id="errorMessage"></p>
+
+      <div class="btn-row">
+        <button type="button" class="primary" id="submitBtn" onclick="addAppointment()">Add appointment</button>
+        <button type="button" class="secondary" id="clearBtn" onclick="clearForm()">Clear</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPOINTMENTS LIST -->
+  <section class="panel" id="panel-list">
+    <h2 class="section-title">Appointments</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Mobile number</th>
+            <th>Date</th>
+            <th>Guests</th>
+            <th>Payment status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="appointmentTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="panel" id="panel-cal">
+    <h2 class="section-title">Booking calendar</h2>
+    <div class="cal-card">
+      <div class="cal-nav">
+        <button type="button" onclick="previousMonth()">&#8249;</button>
+        <span id="monthYear">September 2026</span>
+        <button type="button" onclick="nextMonth()">&#8250;</button>
+      </div>
+      <table class="calendar">
+        <thead>
+          <tr>
+            <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+          </tr>
+        </thead>
+        <tbody id="calendarBody"></tbody>
+      </table>
+      <div class="legend"><span class="swatch"></span> Booked date — click to manage</div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* =====================================================================
+   POLICARPIO'S PRIVATE POOL — APPOINTMENT SYSTEM
+
+   1) BUSINESS PROCESS
+      A staff member records a client's pool booking (name, mobile,
+      guest count, date range, payment status). Before a booking is
+      accepted, the system must confirm the requested date range does
+      not conflict with an existing booking (the pool can only be
+      rented by one party at a time). Once accepted, staff can review
+      all bookings in a table or see them plotted on a monthly
+      calendar, and can edit or cancel a booking from either view.
+
+   2) INPUT -> PROCESS -> OUTPUT
+      INPUT   : name, mobile number, guest count, start date,
+                optional end date ("until"), payment status.
+      PROCESS : validate the fields -> check the new date range against
+                every existing booking for a conflict -> if free,
+                insert the booking into a data structure kept sorted
+                by start date -> if editing, remove the old entry and
+                re-insert it in its new sorted position.
+      OUTPUT  : an appointments table (chronological) and a calendar
+                view with booked days highlighted.
+
+   3) DATA STRUCTURE CHOSEN
+      `appointments` is kept as an array that is ALWAYS sorted in
+      ascending order by start date. Keeping it sorted is what makes
+      binary search possible for conflict checking below — this is
+      the core DS&A decision for this module.
+
+   4) ALGORITHMS — all implemented manually (no .sort(), .find(),
+      .filter(), .some(), .includes(), or .splice() are used):
+        - insertSorted()      : manual insertion-sort-style insert
+        - binarySearchInsertPos(): manual binary search
+        - hasConflict()       : uses the binary search result to avoid
+                                 scanning the whole array
+        - removeAt()          : manual shift-left removal
+        - findIndexById()     : manual linear search (used only for the
+                                 rare edit/remove-by-id lookup, see
+                                 complexity note on that function)
+   ===================================================================== */
+
+// ---------- Tab switching ----------
+function switchTab(tab){
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  document.querySelector('.tab-btn[data-tab="' + tab + '"]').classList.add('active');
+}
+
+// Data structure: array of appointment objects, invariant = always
+// sorted ascending by `date` (enforced by insertSorted/removeAt only —
+// never mutated any other way).
+let appointments = [];
+
+// Simple incrementing key so each appointment can be identified even
+// after its position in the sorted array changes.
+let nextId = 1;
+
+// id of the appointment currently being edited (null = adding new)
+let editId = null;
+
+// Controls the calendar's current month (starts on today's month)
+let today = new Date();
+let currentMonth = today.getMonth();
+let currentYear = today.getFullYear();
+
+function getTodayString() {
+  let now = new Date();
+  let m = String(now.getMonth() + 1).padStart(2, "0");
+  let d = String(now.getDate()).padStart(2, "0");
+  return now.getFullYear() + "-" + m + "-" + d;
+}
+
+const monthNames = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December"
+];
+
+/* ---------------------------------------------------------------------
+   ALGORITHM: Manual Binary Search
+   Finds the index of the first appointment whose start date is >=
+   targetDate, i.e. the position where targetDate would be inserted
+   to keep the array sorted.
+   Time Complexity : O(log n)
+   Space Complexity: O(1)
+--------------------------------------------------------------------- */
+function binarySearchInsertPos(targetDate) {
+  let lo = 0;
+  let hi = appointments.length; // exclusive upper bound
+
+  while (lo < hi) {
+    let mid = Math.floor((lo + hi) / 2);
+    if (appointments[mid].date < targetDate) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
+}
+
+/* ---------------------------------------------------------------------
+   ALGORITHM: Manual Insertion Sort (single-element insert)
+   Uses the sorted position found by binary search, then shifts
+   elements right by hand to open a slot — this is the manual
+   insertion-sort mechanic applied one element at a time so the array
+   never has to be re-sorted from scratch.
+   Time Complexity : O(n) worst case (shifting), O(log n) to locate
+                      the slot
+   Space Complexity: O(1) additional space
+--------------------------------------------------------------------- */
+function insertSorted(appt) {
+  let pos = binarySearchInsertPos(appt.date);
+
+  appointments.length = appointments.length + 1; // open one slot
+  for (let i = appointments.length - 1; i > pos; i--) {
+    appointments[i] = appointments[i - 1];
+  }
+  appointments[pos] = appt;
+}
+
+/* ---------------------------------------------------------------------
+   ALGORITHM: Manual shift-based removal (replaces Array.splice)
+   Time Complexity : O(n) worst case (shifting elements left)
+   Space Complexity: O(1) additional space
+--------------------------------------------------------------------- */
+function removeAt(index) {
+  for (let i = index; i < appointments.length - 1; i++) {
+    appointments[i] = appointments[i + 1];
+  }
+  appointments.length = appointments.length - 1;
+}
+
+/* ---------------------------------------------------------------------
+   Manual linear search by id.
+   Time Complexity : O(n) — used only when the user clicks Edit/Remove
+                      on a single row, an infrequent, user-paced
+                      operation, so O(n) here is an acceptable
+                      trade-off against the added complexity of
+                      maintaining a full id->index index structure.
+   Space Complexity: O(1)
+--------------------------------------------------------------------- */
+function findIndexById(id) {
+  for (let i = 0; i < appointments.length; i++) {
+    if (appointments[i].id === id) return i;
+  }
+  return -1;
+}
+
+/* ---------------------------------------------------------------------
+   ALGORITHM: Conflict check using binary search
+   Because the array is kept sorted by start date, we only need to
+   inspect the appointment just before the insertion point (its range
+   may extend into ours) and the run of appointments whose start date
+   falls inside [date, rangeEnd] — every other appointment in the
+   array is provably out of range and is never touched.
+   Time Complexity : O(log n) to locate the region + O(k) to check the
+                      k candidates that could possibly overlap
+                      (k is normally small; worst case O(n) if every
+                      booking overlaps, same as the problem itself
+                      requires)
+   Space Complexity: O(1)
+--------------------------------------------------------------------- */
+function hasConflict(date, rangeEnd, skipId) {
+  let pos = binarySearchInsertPos(date);
+
+  if (pos - 1 >= 0) {
+    let a = appointments[pos - 1];
+    if (a.id !== skipId) {
+      let existingEnd = a.until || a.date;
+      if (date <= existingEnd && rangeEnd >= a.date) return a;
+    }
+  }
+
+  let i = pos;
+  while (i < appointments.length && appointments[i].date <= rangeEnd) {
+    let a = appointments[i];
+    if (a.id !== skipId) {
+      let existingEnd = a.until || a.date;
+      if (date <= existingEnd && rangeEnd >= a.date) return a;
+    }
+    i++;
+  }
+  return null;
+}
+
+function addAppointment() {
+  let name = document.getElementById("name").value;
+  let mobile = document.getElementById("mobile").value;
+  let guestCount = document.getElementById("guestCount").value;
+  let date = document.getElementById("date").value;
+  let until = document.getElementById("until").value;
+  let paymentStatus = document.getElementById("paymentStatus").value;
+
+  let errorMessage = document.getElementById("errorMessage");
+  errorMessage.innerHTML = "";
+
+  if (name === "" || mobile === "" || guestCount === "" || date === "" || paymentStatus === "") {
+    errorMessage.innerHTML = "Please complete all the information.";
+    return;
+  }
+
+  if (guestCount > 30) {
+    errorMessage.innerHTML = "Number of guests cannot exceed 30.";
+    return;
+  }
+
+  if (!/^\d+$/.test(mobile)) {
+    errorMessage.innerHTML = "Mobile number must contain numbers only.";
+    return;
+  }
+
+  if (date < getTodayString()) {
+    errorMessage.innerHTML = "Appointment date cannot be in the past.";
+    return;
+  }
+
+  if (until !== "" && until < date) {
+    errorMessage.innerHTML = "The 'Until' date cannot be before the start date.";
+    return;
+  }
+
+  let rangeEnd = until || date;
+
+  let conflict = hasConflict(date, rangeEnd, editId);
+  if (conflict) {
+    errorMessage.innerHTML = "Those dates overlap with an existing booking for " + conflict.name + ".";
+    return;
+  }
+
+  if (editId !== null) {
+    // Editing: pull the old entry out, then re-insert it (its date may
+    // have changed, so it may belong at a different sorted position).
+    let oldIndex = findIndexById(editId);
+    if (oldIndex !== -1) removeAt(oldIndex);
+
+    insertSorted({ id: editId, name, mobile, guestCount, date, until, paymentStatus });
+  } else {
+    insertSorted({ id: nextId, name, mobile, guestCount, date, until, paymentStatus });
+    nextId++;
+  }
+
+  displayAppointments();
+  displayCalendar();
+  clearForm();
+  switchTab('list');
+}
+
+function editAppointment(id) {
+  let index = findIndexById(id);
+  if (index === -1) return;
+  let a = appointments[index];
+
+  document.getElementById("name").value = a.name;
+  document.getElementById("mobile").value = a.mobile;
+  document.getElementById("guestCount").value = a.guestCount;
+  document.getElementById("date").value = a.date;
+  document.getElementById("until").value = a.until || "";
+  document.getElementById("paymentStatus").value = a.paymentStatus;
+  document.getElementById("errorMessage").innerHTML = "";
+
+  editId = id;
+  document.getElementById("submitBtn").innerHTML = "Save changes";
+  document.getElementById("clearBtn").innerHTML = "Cancel edit";
+
+  switchTab('book');
+}
+
+function displayAppointments() {
+  let table = document.getElementById("appointmentTable");
+  table.innerHTML = "";
+
+  if (appointments.length === 0) {
+    let row = table.insertRow();
+    row.className = "empty-row";
+    let cell = row.insertCell(0);
+    cell.colSpan = 6;
+    cell.innerHTML = "No appointments yet. Add one from New Booking.";
+    return;
+  }
+
+  // appointments is already sorted by date (array invariant), so this
+  // loop naturally renders the table in chronological order.
+  for (let i = 0; i < appointments.length; i++) {
+    let appt = appointments[i];
+    let row = table.insertRow();
+
+    let nameCell = row.insertCell(0);
+    let mobileCell = row.insertCell(1);
+    let dateCell = row.insertCell(2);
+    let guestCell = row.insertCell(3);
+    let paymentCell = row.insertCell(4);
+    let actionCell = row.insertCell(5);
+
+    nameCell.innerHTML = appt.name;
+    mobileCell.innerHTML = appt.mobile;
+    dateCell.innerHTML = appt.until
+      ? appt.date + " &rarr; " + appt.until
+      : appt.date;
+    guestCell.innerHTML = appt.guestCount;
+    paymentCell.innerHTML = '<span class="status-pill status-' + appt.paymentStatus + '">' + appt.paymentStatus + '</span>';
+
+    let editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "secondary";
+    editButton.style.marginRight = "6px";
+    editButton.innerHTML = "Edit";
+    editButton.addEventListener("click", function () {
+      editAppointment(appt.id);
+    });
+
+    let removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "danger-btn";
+    removeButton.innerHTML = "Remove";
+    removeButton.addEventListener("click", function () {
+      removeAppointment(appt.id);
+    });
+
+    actionCell.appendChild(editButton);
+    actionCell.appendChild(removeButton);
+  }
+}
+
+function removeAppointment(id) {
+  let index = findIndexById(id);
+  if (index === -1) return;
+
+  removeAt(index);
+
+  if (editId === id) {
+    clearForm();
+  }
+
+  displayAppointments();
+  displayCalendar();
+}
+
+function clearForm() {
+  document.getElementById("name").value = "";
+  document.getElementById("mobile").value = "";
+  document.getElementById("guestCount").value = "";
+  document.getElementById("date").value = "";
+  document.getElementById("until").value = "";
+  document.getElementById("paymentStatus").value = "";
+  document.getElementById("errorMessage").innerHTML = "";
+
+  editId = null;
+  document.getElementById("submitBtn").innerHTML = "Add appointment";
+  document.getElementById("clearBtn").innerHTML = "Clear";
+}
+
+function displayCalendar() {
+  let calendarBody = document.getElementById("calendarBody");
+  let monthYearLabel = document.getElementById("monthYear");
+
+  calendarBody.innerHTML = "";
+  monthYearLabel.innerHTML = monthNames[currentMonth] + " " + currentYear;
+
+  let firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  let daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+  let row = document.createElement("tr");
+
+  for (let i = 0; i < firstDay; i++) {
+    let blankCell = document.createElement("td");
+    blankCell.className = "blank";
+    row.appendChild(blankCell);
+  }
+
+  // For each day in the month, reuse the same binary-search-backed
+  // hasConflict() check (treating the single day as a 1-day range)
+  // instead of a second hand-rolled linear scan.
+  // Time Complexity for the whole month: O(d log n) where d = days
+  // in the month (~28-31) and n = number of appointments.
+  for (let day = 1; day <= daysInMonth; day++) {
+    let cell = document.createElement("td");
+    cell.innerHTML = day;
+
+    let monthText = String(currentMonth + 1).padStart(2, "0");
+    let dayText = String(day).padStart(2, "0");
+    let cellDate = currentYear + "-" + monthText + "-" + dayText;
+
+    let booking = hasConflict(cellDate, cellDate, null);
+
+    if (booking) {
+      cell.innerHTML = day + '<span class="booked-tag">BOOKED</span>';
+      cell.className = "booked";
+      cell.addEventListener("click", function () {
+        removeAppointmentByDate(cellDate);
+      });
+    }
+
+    row.appendChild(cell);
+
+    if ((firstDay + day) % 7 === 0) {
+      calendarBody.appendChild(row);
+      row = document.createElement("tr");
+    }
+  }
+
+  if (row.children.length > 0) {
+    while (row.children.length < 7) {
+      let blankCell = document.createElement("td");
+      blankCell.className = "blank";
+      row.appendChild(blankCell);
+    }
+    calendarBody.appendChild(row);
+  }
+}
+
+function removeAppointmentByDate(dateClicked) {
+  // A single calendar day can be covered by more than one multi-day
+  // range only in invalid data, but we still gather every match here
+  // defensively. This has to inspect every booking that could span
+  // the date, so it is O(n) by nature of the question being asked
+  // ("list everything covering this day"), unlike hasConflict()
+  // above which only needs the *existence* of one match.
+  let idsOnThisDate = [];
+  let namesOnThisDate = [];
+  for (let i = 0; i < appointments.length; i++) {
+    let a = appointments[i];
+    let rangeEnd = a.until || a.date;
+    if (dateClicked >= a.date && dateClicked <= rangeEnd) {
+      idsOnThisDate.push(a.id);
+      namesOnThisDate.push(a.name);
+    }
+  }
+
+  if (idsOnThisDate.length === 0) return;
+
+  let confirmRemove = confirm(
+    "Remove appointment(s) covering " + dateClicked + " for: " + namesOnThisDate.join(", ") + "?"
+  );
+
+  if (!confirmRemove) return;
+
+  for (let i = 0; i < idsOnThisDate.length; i++) {
+    let index = findIndexById(idsOnThisDate[i]);
+    if (index !== -1) removeAt(index);
+  }
+
+  displayAppointments();
+  displayCalendar();
+}
+
+function previousMonth() {
+  currentMonth -= 1;
+  if (currentMonth < 0) {
+    currentMonth = 11;
+    currentYear -= 1;
+  }
+  displayCalendar();
+}
+
+function nextMonth() {
+  currentMonth += 1;
+  if (currentMonth > 11) {
+    currentMonth = 0;
+    currentYear += 1;
+  }
+  displayCalendar();
+}
+
+displayAppointments();
+displayCalendar();
+
+// Mobile field only accepts numbers
+document.getElementById("mobile").addEventListener("input", function () {
+  this.value = this.value.replace(/\D/g, "");
+});
+
+// Prevent picking a past date in the date pickers
+document.getElementById("date").min = getTodayString();
+document.getElementById("until").min = getTodayString();
+document.getElementById("date").addEventListener("change", function () {
+  document.getElementById("until").min = this.value || getTodayString();
+});
+</script>
+
+</body>
+</html>
