@@ -28,7 +28,6 @@
     color: var(--ink);
   }
 
-  /* ---------- Top nav ---------- */
   header.topnav{
     position: sticky;
     top: 0;
@@ -394,7 +393,11 @@
         </div>
         <div class="field">
           <label for="guestCount">Number of guests</label>
-          <input type="number" id="guestCount" min="1" max="30" placeholder="1-30">
+          <input type="number" id="guestCount" min="1" max="100" placeholder="1-100">
+        </div>
+        <div class="field">
+          <label for="eventType">Event type (optional)</label>
+          <input type="text" id="eventType" placeholder="e.g. Birthday, Reunion, Party pack">
         </div>
         <div class="field">
           <label for="date">Date</label>
@@ -423,7 +426,7 @@
     </div>
   </section>
 
-  <!-- APPOINTMENTS LIST -->
+
   <section class="panel" id="panel-list">
     <h2 class="section-title">Appointments</h2>
     <div class="table-wrap">
@@ -434,6 +437,7 @@
             <th>Mobile number</th>
             <th>Date</th>
             <th>Guests</th>
+            <th>Event type</th>
             <th>Payment status</th>
             <th>Actions</th>
           </tr>
@@ -468,55 +472,14 @@
         </thead>
         <tbody id="calendarBody"></tbody>
       </table>
-      <div class="legend"><span class="swatch"></span> Booked date â€” click to manage</div>
+      <div class="legend"><span class="swatch"></span> Booked date &mdash; click to manage</div>
     </div>
   </section>
 
 </main>
 
 <script>
-/* =====================================================================
-   POLICARPIO'S PRIVATE POOL â€” APPOINTMENT SYSTEM
 
-   1) BUSINESS PROCESS
-      A staff member records a client's pool booking (name, mobile,
-      guest count, date range, payment status). Before a booking is
-      accepted, the system must confirm the requested date range does
-      not conflict with an existing booking (the pool can only be
-      rented by one party at a time). Once accepted, staff can review
-      all bookings in a table or see them plotted on a monthly
-      calendar, and can edit or cancel a booking from either view.
-
-   2) INPUT -> PROCESS -> OUTPUT
-      INPUT   : name, mobile number, guest count, start date,
-                optional end date ("until"), payment status.
-      PROCESS : validate the fields -> check the new date range against
-                every existing booking for a conflict -> if free,
-                insert the booking into a data structure kept sorted
-                by start date -> if editing, remove the old entry and
-                re-insert it in its new sorted position.
-      OUTPUT  : an appointments table (chronological) and a calendar
-                view with booked days highlighted.
-
-   3) DATA STRUCTURE CHOSEN
-      `appointments` is kept as an array that is ALWAYS sorted in
-      ascending order by start date. Keeping it sorted is what makes
-      binary search possible for conflict checking below â€” this is
-      the core DS&A decision for this module.
-
-   4) ALGORITHMS â€” all implemented manually (no .sort(), .find(),
-      .filter(), .some(), .includes(), or .splice() are used):
-        - insertSorted()      : manual insertion-sort-style insert
-        - binarySearchInsertPos(): manual binary search
-        - hasConflict()       : uses the binary search result to avoid
-                                 scanning the whole array
-        - removeAt()          : manual shift-left removal
-        - findIndexById()     : manual linear search (used only for the
-                                 rare edit/remove-by-id lookup, see
-                                 complexity note on that function)
-   ===================================================================== */
-
-// ---------- Tab switching ----------
 function switchTab(tab){
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -524,24 +487,20 @@ function switchTab(tab){
   document.querySelector('.tab-btn[data-tab="' + tab + '"]').classList.add('active');
 }
 
-// Data structure: array of appointment objects, invariant = always
-// sorted ascending by `date` (enforced by insertSorted/removeAt only â€”
-// never mutated any other way).
+
 let appointments = [];
 
-// Simple incrementing key so each appointment can be identified even
-// after its position in the sorted array changes.
 let nextId = 1;
 
-// id of the appointment currently being edited (null = adding new)
+
 let editId = null;
 
-// Controls the calendar's current month (starts on today's month)
+
 let today = new Date();
 let currentMonth = today.getMonth();
 let currentYear = today.getFullYear();
 
-// Date currently highlighted via the calendar search box (yyyy-mm-dd or null)
+
 let highlightedDate = null;
 
 function getTodayString() {
@@ -556,14 +515,7 @@ const monthNames = [
   "July","August","September","October","November","December"
 ];
 
-/* ---------------------------------------------------------------------
-   ALGORITHM: Manual Binary Search
-   Finds the index of the first appointment whose start date is >=
-   targetDate, i.e. the position where targetDate would be inserted
-   to keep the array sorted.
-   Time Complexity : O(log n)
-   Space Complexity: O(1)
---------------------------------------------------------------------- */
+
 function binarySearchInsertPos(targetDate) {
   let lo = 0;
   let hi = appointments.length; // exclusive upper bound
@@ -579,16 +531,7 @@ function binarySearchInsertPos(targetDate) {
   return lo;
 }
 
-/* ---------------------------------------------------------------------
-   ALGORITHM: Manual Insertion Sort (single-element insert)
-   Uses the sorted position found by binary search, then shifts
-   elements right by hand to open a slot â€” this is the manual
-   insertion-sort mechanic applied one element at a time so the array
-   never has to be re-sorted from scratch.
-   Time Complexity : O(n) worst case (shifting), O(log n) to locate
-                      the slot
-   Space Complexity: O(1) additional space
---------------------------------------------------------------------- */
+
 function insertSorted(appt) {
   let pos = binarySearchInsertPos(appt.date);
 
@@ -599,11 +542,7 @@ function insertSorted(appt) {
   appointments[pos] = appt;
 }
 
-/* ---------------------------------------------------------------------
-   ALGORITHM: Manual shift-based removal (replaces Array.splice)
-   Time Complexity : O(n) worst case (shifting elements left)
-   Space Complexity: O(1) additional space
---------------------------------------------------------------------- */
+
 function removeAt(index) {
   for (let i = index; i < appointments.length - 1; i++) {
     appointments[i] = appointments[i + 1];
@@ -611,15 +550,7 @@ function removeAt(index) {
   appointments.length = appointments.length - 1;
 }
 
-/* ---------------------------------------------------------------------
-   Manual linear search by id.
-   Time Complexity : O(n) â€” used only when the user clicks Edit/Remove
-                      on a single row, an infrequent, user-paced
-                      operation, so O(n) here is an acceptable
-                      trade-off against the added complexity of
-                      maintaining a full id->index index structure.
-   Space Complexity: O(1)
---------------------------------------------------------------------- */
+
 function findIndexById(id) {
   for (let i = 0; i < appointments.length; i++) {
     if (appointments[i].id === id) return i;
@@ -627,20 +558,7 @@ function findIndexById(id) {
   return -1;
 }
 
-/* ---------------------------------------------------------------------
-   ALGORITHM: Conflict check using binary search
-   Because the array is kept sorted by start date, we only need to
-   inspect the appointment just before the insertion point (its range
-   may extend into ours) and the run of appointments whose start date
-   falls inside [date, rangeEnd] â€” every other appointment in the
-   array is provably out of range and is never touched.
-   Time Complexity : O(log n) to locate the region + O(k) to check the
-                      k candidates that could possibly overlap
-                      (k is normally small; worst case O(n) if every
-                      booking overlaps, same as the problem itself
-                      requires)
-   Space Complexity: O(1)
---------------------------------------------------------------------- */
+
 function hasConflict(date, rangeEnd, skipId) {
   let pos = binarySearchInsertPos(date);
 
@@ -668,6 +586,7 @@ function addAppointment() {
   let name = document.getElementById("name").value;
   let mobile = document.getElementById("mobile").value;
   let guestCount = document.getElementById("guestCount").value;
+  let eventType = document.getElementById("eventType").value;
   let date = document.getElementById("date").value;
   let until = document.getElementById("until").value;
   let paymentStatus = document.getElementById("paymentStatus").value;
@@ -680,8 +599,8 @@ function addAppointment() {
     return;
   }
 
-  if (guestCount > 30) {
-    errorMessage.innerHTML = "Number of guests cannot exceed 30.";
+  if (guestCount > 100) {
+    errorMessage.innerHTML = "Number of guests cannot exceed 100.";
     return;
   }
 
@@ -714,9 +633,9 @@ function addAppointment() {
     let oldIndex = findIndexById(editId);
     if (oldIndex !== -1) removeAt(oldIndex);
 
-    insertSorted({ id: editId, name, mobile, guestCount, date, until, paymentStatus });
+    insertSorted({ id: editId, name, mobile, guestCount, eventType, date, until, paymentStatus });
   } else {
-    insertSorted({ id: nextId, name, mobile, guestCount, date, until, paymentStatus });
+    insertSorted({ id: nextId, name, mobile, guestCount, eventType, date, until, paymentStatus });
     nextId++;
   }
 
@@ -734,6 +653,7 @@ function editAppointment(id) {
   document.getElementById("name").value = a.name;
   document.getElementById("mobile").value = a.mobile;
   document.getElementById("guestCount").value = a.guestCount;
+  document.getElementById("eventType").value = a.eventType || "";
   document.getElementById("date").value = a.date;
   document.getElementById("until").value = a.until || "";
   document.getElementById("paymentStatus").value = a.paymentStatus;
@@ -754,13 +674,12 @@ function displayAppointments() {
     let row = table.insertRow();
     row.className = "empty-row";
     let cell = row.insertCell(0);
-    cell.colSpan = 6;
+    cell.colSpan = 7;
     cell.innerHTML = "No appointments yet. Add one from New Booking.";
     return;
   }
 
-  // appointments is already sorted by date (array invariant), so this
-  // loop naturally renders the table in chronological order.
+ 
   for (let i = 0; i < appointments.length; i++) {
     let appt = appointments[i];
     let row = table.insertRow();
@@ -769,8 +688,9 @@ function displayAppointments() {
     let mobileCell = row.insertCell(1);
     let dateCell = row.insertCell(2);
     let guestCell = row.insertCell(3);
-    let paymentCell = row.insertCell(4);
-    let actionCell = row.insertCell(5);
+    let eventCell = row.insertCell(4);
+    let paymentCell = row.insertCell(5);
+    let actionCell = row.insertCell(6);
 
     nameCell.innerHTML = appt.name;
     mobileCell.innerHTML = appt.mobile;
@@ -778,6 +698,7 @@ function displayAppointments() {
       ? appt.date + " &rarr; " + appt.until
       : appt.date;
     guestCell.innerHTML = appt.guestCount;
+    eventCell.innerHTML = appt.eventType ? appt.eventType : "&mdash;";
     paymentCell.innerHTML = '<span class="status-pill status-' + appt.paymentStatus + '">' + appt.paymentStatus + '</span>';
 
     let editButton = document.createElement("button");
@@ -824,6 +745,7 @@ function clearForm() {
   document.getElementById("name").value = "";
   document.getElementById("mobile").value = "";
   document.getElementById("guestCount").value = "";
+  document.getElementById("eventType").value = "";
   document.getElementById("date").value = "";
   document.getElementById("until").value = "";
   document.getElementById("paymentStatus").value = "";
@@ -852,11 +774,7 @@ function displayCalendar() {
     row.appendChild(blankCell);
   }
 
-  // For each day in the month, reuse the same binary-search-backed
-  // hasConflict() check (treating the single day as a 1-day range)
-  // instead of a second hand-rolled linear scan.
-  // Time Complexity for the whole month: O(d log n) where d = days
-  // in the month (~28-31) and n = number of appointments.
+ 
   for (let day = 1; day <= daysInMonth; day++) {
     let cell = document.createElement("td");
     cell.innerHTML = day;
@@ -875,7 +793,7 @@ function displayCalendar() {
       });
     }
 
-    // Highlight the date currently targeted by the calendar search box
+
     if (highlightedDate !== null && cellDate === highlightedDate) {
       cell.className = (cell.className ? cell.className + " " : "") + "highlighted";
     }
@@ -898,9 +816,7 @@ function displayCalendar() {
   }
 }
 
-// ---------- Calendar: search by date ----------
-// Jumps the calendar to the month containing the searched date and
-// highlights that day. Also reports whether the date is booked.
+
 function searchCalendarDate() {
   let searchInput = document.getElementById("calSearchDate");
   let msg = document.getElementById("calSearchMsg");
@@ -932,12 +848,7 @@ function searchCalendarDate() {
 }
 
 function removeAppointmentByDate(dateClicked) {
-  // A single calendar day can be covered by more than one multi-day
-  // range only in invalid data, but we still gather every match here
-  // defensively. This has to inspect every booking that could span
-  // the date, so it is O(n) by nature of the question being asked
-  // ("list everything covering this day"), unlike hasConflict()
-  // above which only needs the *existence* of one match.
+
   let idsOnThisDate = [];
   let namesOnThisDate = [];
   for (let i = 0; i < appointments.length; i++) {
@@ -987,12 +898,12 @@ function nextMonth() {
 displayAppointments();
 displayCalendar();
 
-// Mobile field only accepts numbers
+
 document.getElementById("mobile").addEventListener("input", function () {
   this.value = this.value.replace(/\D/g, "");
 });
 
-// Prevent picking a past date in the date pickers
+
 document.getElementById("date").min = getTodayString();
 document.getElementById("until").min = getTodayString();
 document.getElementById("date").addEventListener("change", function () {
